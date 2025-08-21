@@ -30,7 +30,6 @@ def main():
         "CRUD Operations",
         "SQL Queries & Visualization",
         "Learner SQL Queries",
-        "User Introduction"
     ]
     
     selected_nav = st.sidebar.radio("Go to", nav_options)
@@ -46,8 +45,7 @@ def main():
         show_queries_visualization()
     elif selected_nav == "Learner SQL Queries":
         show_learner_queries()
-    elif selected_nav == "User Introduction":
-        show_user_introduction()
+
 
 # Project Introduction
 def show_introduction():
@@ -156,11 +154,195 @@ def show_crud_operations():
         
     elif selected_crud == "Update Record":
         st.subheader("Update Record")
-        st.info("Update functionality would be implemented here")
+        
+        table_options = ["providers", "food", "receivers", "claims"]
+        selected_table = st.selectbox("Select table to update", table_options)
+        
+        conn = get_db_connection()
+        
+        if selected_table == "providers":
+            providers = pd.read_sql_query("SELECT * FROM providers", conn)
+            selected_provider = st.selectbox("Select provider to update", providers['Provider_ID'])
+            
+            provider_data = pd.read_sql_query(
+                f"SELECT * FROM providers WHERE Provider_ID = {selected_provider}", conn
+            ).iloc[0]
+            
+            with st.form("update_provider"):
+                name = st.text_input("Name", value=provider_data['Name'])
+                type_ = st.text_input("Type", value=provider_data['Type'])
+                address = st.text_input("Address", value=provider_data['Address'])
+                city = st.text_input("City", value=provider_data['City'])
+                contact = st.text_input("Contact", value=provider_data['Contact'])
+                
+                submitted = st.form_submit_button("Update Provider")
+                if submitted:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """UPDATE providers SET Name = ?, Type = ?, Address = ?, 
+                        City = ?, Contact = ? WHERE Provider_ID = ?""",
+                        (name, type_, address, city, contact, selected_provider)
+                    )
+                    conn.commit()
+                    st.success("Provider updated successfully!")
+        
+        elif selected_table == "food":
+            food_items = pd.read_sql_query("SELECT * FROM food", conn)
+            selected_food = st.selectbox("Select food item to update", food_items['Food_ID'])
+            
+            food_data = pd.read_sql_query(
+                f"SELECT * FROM food WHERE Food_ID = {selected_food}", conn
+            ).iloc[0]
+            
+            with st.form("update_food"):
+                food_name = st.text_input("Food Name", value=food_data['Food_Name'])
+                quantity = st.number_input("Quantity", min_value=1, value=int(food_data['Quantity']))
+                expiry_date = st.date_input("Expiry Date", value=pd.to_datetime(food_data['Expiry_Date']))
+                provider_id = st.number_input("Provider ID", min_value=1, value=int(food_data['Provider_ID']))
+                provider_type = st.text_input("Provider Type", value=food_data['Provider_Type'])
+                location = st.text_input("Location", value=food_data['Location'])
+                food_type = st.selectbox("Food Type", ["Vegetarian", "Non-Vegetarian", "Vegan"], 
+                                       index=["Vegetarian", "Non-Vegetarian", "Vegan"].index(food_data['Food_Type']))
+                meal_type = st.selectbox("Meal Type", ["Breakfast", "Lunch", "Dinner", "Snacks"], 
+                                       index=["Breakfast", "Lunch", "Dinner", "Snacks"].index(food_data['Meal_Type']))
+                
+                submitted = st.form_submit_button("Update Food")
+                if submitted:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """UPDATE food SET Food_Name = ?, Quantity = ?, Expiry_Date = ?, 
+                        Provider_ID = ?, Provider_Type = ?, Location = ?, Food_Type = ?, 
+                        Meal_Type = ? WHERE Food_ID = ?""",
+                        (food_name, quantity, expiry_date, provider_id, provider_type, 
+                         location, food_type, meal_type, selected_food)
+                    )
+                    conn.commit()
+                    st.success("Food item updated successfully!")
+        
+        elif selected_table == "receivers":
+            receivers = pd.read_sql_query("SELECT * FROM receivers", conn)
+            selected_receiver = st.selectbox("Select receiver to update", receivers['Receiver_ID'])
+            
+            receiver_data = pd.read_sql_query(
+                f"SELECT * FROM receivers WHERE Receiver_ID = {selected_receiver}", conn
+            ).iloc[0]
+            
+            with st.form("update_receiver"):
+                name = st.text_input("Name", value=receiver_data['Name'])
+                type_ = st.text_input("Type", value=receiver_data['Type'])
+                city = st.text_input("City", value=receiver_data['City'])
+                contact = st.text_input("Contact", value=receiver_data['Contact'])
+                
+                submitted = st.form_submit_button("Update Receiver")
+                if submitted:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """UPDATE receivers SET Name = ?, Type = ?, City = ?, 
+                        Contact = ? WHERE Receiver_ID = ?""",
+                        (name, type_, city, contact, selected_receiver)
+                    )
+                    conn.commit()
+                    st.success("Receiver updated successfully!")
+        
+        elif selected_table == "claims":
+            claims = pd.read_sql_query("SELECT * FROM claims", conn)
+            selected_claim = st.selectbox("Select claim to update", claims['Claim_ID'])
+            
+            claim_data = pd.read_sql_query(
+                f"SELECT * FROM claims WHERE Claim_ID = {selected_claim}", conn
+            ).iloc[0]
+            
+            with st.form("update_claim"):
+                food_id = st.number_input("Food ID", min_value=1, value=int(claim_data['Food_ID']))
+                receiver_id = st.number_input("Receiver ID", min_value=1, value=int(claim_data['Receiver_ID']))
+                status = st.selectbox("Status", ["Pending", "Completed", "Cancelled"], 
+                                    index=["Pending", "Completed", "Cancelled"].index(claim_data['Status']))
+                timestamp = st.date_input("Timestamp", value=pd.to_datetime(claim_data['Timestamp']))
+                
+                submitted = st.form_submit_button("Update Claim")
+                if submitted:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """UPDATE claims SET Food_ID = ?, Receiver_ID = ?, Status = ?, 
+                        Timestamp = ? WHERE Claim_ID = ?""",
+                        (food_id, receiver_id, status, timestamp, selected_claim)
+                    )
+                    conn.commit()
+                    st.success("Claim updated successfully!")
+        
+        conn.close()
         
     elif selected_crud == "Delete Record":
         st.subheader("Delete Record")
-        st.info("Delete functionality would be implemented here")
+        
+        table_options = ["providers", "food", "receivers", "claims"]
+        selected_table = st.selectbox("Select table to delete from", table_options)
+        
+        conn = get_db_connection()
+        
+        if selected_table == "providers":
+            providers = pd.read_sql_query("SELECT * FROM providers", conn)
+            selected_provider = st.selectbox("Select provider to delete", providers['Provider_ID'])
+            
+            if st.button("Delete Provider"):
+                cursor = conn.cursor()
+                # First check if provider has food items
+                food_count = pd.read_sql_query(
+                    f"SELECT COUNT(*) as count FROM food WHERE Provider_ID = {selected_provider}", conn
+                )['count'][0]
+                
+                if food_count > 0:
+                    st.warning(f"Cannot delete provider. There are {food_count} food items associated with this provider.")
+                else:
+                    cursor.execute(f"DELETE FROM providers WHERE Provider_ID = {selected_provider}")
+                    conn.commit()
+                    st.success("Provider deleted successfully!")
+        
+        elif selected_table == "food":
+            food_items = pd.read_sql_query("SELECT * FROM food", conn)
+            selected_food = st.selectbox("Select food item to delete", food_items['Food_ID'])
+            
+            if st.button("Delete Food Item"):
+                cursor = conn.cursor()
+                # First check if food item has claims
+                claim_count = pd.read_sql_query(
+                    f"SELECT COUNT(*) as count FROM claims WHERE Food_ID = {selected_food}", conn
+                )['count'][0]
+                
+                if claim_count > 0:
+                    st.warning(f"Cannot delete food item. There are {claim_count} claims associated with this food item.")
+                else:
+                    cursor.execute(f"DELETE FROM food WHERE Food_ID = {selected_food}")
+                    conn.commit()
+                    st.success("Food item deleted successfully!")
+        
+        elif selected_table == "receivers":
+            receivers = pd.read_sql_query("SELECT * FROM receivers", conn)
+            selected_receiver = st.selectbox("Select receiver to delete", receivers['Receiver_ID'])
+            
+            if st.button("Delete Receiver"):
+                cursor = conn.cursor()
+                # First check if receiver has claims
+                claim_count = pd.read_sql_query(
+                    f"SELECT COUNT(*) as count FROM claims WHERE Receiver_ID = {selected_receiver}", conn
+                )['count'][0]
+                
+                if claim_count > 0:
+                    st.warning(f"Cannot delete receiver. There are {claim_count} claims associated with this receiver.")
+                else:
+                    cursor.execute(f"DELETE FROM receivers WHERE Receiver_ID = {selected_receiver}")
+                    conn.commit()
+                    st.success("Receiver deleted successfully!")
+        
+        elif selected_table == "claims":
+            claims = pd.read_sql_query("SELECT * FROM claims", conn)
+            selected_claim = st.selectbox("Select claim to delete", claims['Claim_ID'])
+            
+            if st.button("Delete Claim"):
+                cursor = conn.cursor()
+                cursor.execute(f"DELETE FROM claims WHERE Claim_ID = {selected_claim}")
+                conn.commit()
+                st.success("Claim deleted successfully!")
 
 # SQL Queries & Visualization
 def show_queries_visualization():
@@ -400,33 +582,6 @@ def show_learner_queries():
                 finally:
                     conn.close()
 
-# User Introduction
-def show_user_introduction():
-    st.title("👤 User Introduction")
-    
-    st.markdown("""
-    ## Welcome to the Food Wastage Management System!
-    
-    This application helps you manage food donations and reduce waste in your community.
-    
-    ### For Food Providers:
-    - List your surplus food items
-    - Specify food type, quantity, and expiry date
-    - Connect with local receivers
-    
-    ### For Food Receivers:
-    - Browse available food listings
-    - Claim food items that meet your needs
-    - Track your claim history
-    
-    ### For Administrators:
-    - Monitor system activity
-    - Generate reports and insights
-    - Manage users and listings
-    """)
-    
-    st.image("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800", 
-             caption="Reducing food waste through community collaboration", use_column_width=True)
 
 if __name__ == "__main__":
     main()
